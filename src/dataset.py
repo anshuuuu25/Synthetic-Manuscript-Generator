@@ -1,75 +1,288 @@
 import os
 import random
+
 from src.generator import SyntheticManuscriptGenerator
 from src.utils import load_config, set_seed
 
+
 class DatasetBatchGenerator:
+
     def __init__(self, config_path="config/config.yaml"):
         self.cfg = load_config(config_path)
-        set_seed(self.cfg.get("dataset", {}).get("seed", 123))
 
-    def _load_corpus(self, corpus_path):
-        if os.path.exists(corpus_path):
-            with open(corpus_path, "r", encoding="utf-8") as f:
-                lines = [l.strip() for l in f if l.strip()]
-                if lines:
-                    return lines
-        return [
-            "लक्षण। अपूर्व असे परियेसा ।८। ऋषि म्हणे रायासी। पुत्रभविष्य पुससी।",
-            "ऐकोनि दुःख पावसी। कवणेपरी सांगावे ।९। राव विनवी तये वेळी।"
+        set_seed(
+            self.cfg.get(
+                "dataset",
+                {}
+            ).get(
+                "seed",
+                123
+            )
+        )
+
+    def _get_script_text(self, script_cfg):
+        return script_cfg["sample_text"]
+
+    def _filter_text(self, text, script_name):
+
+        script_ranges = {
+            "devanagari": (0x0900, 0x097F),
+            "modi": (0x11600, 0x1166F),
+            "sharada": (0x11180, 0x111DF)
+        }
+
+        start, end = script_ranges[script_name]
+
+        allowed_common = set(
+            " \n\t.,;:!?-'\"()[]0123456789।॥"
+        )
+
+        result = []
+
+        for char in text:
+            code = ord(char)
+
+            if start <= code <= end:
+                result.append(char)
+
+            elif char in allowed_common:
+                result.append(char)
+
+        return "".join(result)
+
+    def _prepare_text(self, text, script_name):
+
+        text = self._filter_text(
+            text,
+            script_name
+        )
+
+        lines = [
+            line.strip()
+            for line in text.split("\n")
+            if line.strip()
         ]
 
+        if not lines:
+            return ""
+
+        random.shuffle(lines)
+
+        number_of_lines = random.randint(
+            2,
+            min(5, len(lines))
+        )
+
+        selected_lines = lines[
+            :number_of_lines
+        ]
+
+        return "\n".join(
+            selected_lines
+        )
+
+    def _clear_old_dataset(self, output_base):
+
+        if not os.path.exists(output_base):
+            return
+
+        for root, dirs, files in os.walk(
+            output_base,
+            topdown=False
+        ):
+
+            for file_name in files:
+                file_path = os.path.join(
+                    root,
+                    file_name
+                )
+
+                os.remove(file_path)
+
+            for dir_name in dirs:
+                dir_path = os.path.join(
+                    root,
+                    dir_name
+                )
+
+                if not os.listdir(dir_path):
+                    os.rmdir(dir_path)
+
     def generate_all(self):
-        output_base = self.cfg["dataset"]["output_dir"]
+
+        output_base = "output_dataset"
+
         scripts = self.cfg["scripts"]
-        total_per_script = self.cfg["dataset"]["images_per_script"]
 
-        splits_def = self.cfg["dataset"]["splits"]
-        train_cnt = int(total_per_script * splits_def["train"])
-        val_cnt = int(total_per_script * splits_def["validation"])
-        test_cnt = total_per_script - (train_cnt + val_cnt)
+        total_per_script = 100
 
-        split_plan = [("train", train_cnt), ("validation", val_cnt), ("test", test_cnt)]
+        train_count = 85
+        validation_count = 10
+        test_count = 5
+
+        split_plan = [
+            ("train", train_count),
+            ("validation", validation_count),
+            ("test", test_count)
+        ]
+
+        background_types = [
+            "Aged Handmade Paper",
+            "Aged Paper",
+            "Copper Plate",
+            "Palm Leaf",
+            "Stone Inscription"
+        ]
+
+        layout_modes = [
+            "single_block",
+            "multi_block",
+            "marginal"
+        ]
+
+        self._clear_old_dataset(
+            output_base
+        )
+
         summary = {}
 
         for script_name, script_cfg in scripts.items():
-            corpus = self._load_corpus(script_cfg["corpus_path"])
-            generator = SyntheticManuscriptGenerator(
-                font_path=script_cfg["font_path"],
-                fallback_font=script_cfg.get("fallback_font"),
-                config_path="config/config.yaml"
+
+            print(
+                f"\nGenerating {script_name} dataset..."
             )
 
-            img_idx = 1
+            generator = SyntheticManuscriptGenerator(
+                script_key=script_name,
+                font_path=script_cfg["font_path"],
+                fallback_font=script_cfg.get(
+                    "fallback_font"
+                )
+            )
+
+            source_text = self._get_script_text(
+                script_cfg
+            )
+
+            image_number = 1
+
             script_summary = {}
 
             for split_name, count in split_plan:
-                img_dir = os.path.join(output_base, script_name, split_name, "images")
-                ann_dir = os.path.join(output_base, script_name, split_name, "annotations")
-                os.makedirs(img_dir, exist_ok=True)
-                os.makedirs(ann_dir, exist_ok=True)
 
-                for _ in range(count):
-                    sample_size = min(len(corpus), random.randint(3, 6))
-                    input_text = "\n".join(random.sample(corpus, sample_size))
+                image_dir = os.path.join(
+                    output_base,
+                    script_name,
+                    split_name,
+                    "images"
+                )
 
-                    bg_style = random.choice(self.cfg["styles"]["background_types"])
-                    layout_style = random.choice(self.cfg["layouts"]["modes"])
+                annotation_dir = os.path.join(
+                    output_base,
+                    script_name,
+                    split_name,
+                    "annotations"
+                )
 
-                    img, gt_text = generator.generate_sample(
-                        text_input=input_text,
-                        bg_type=bg_style,
-                        layout_mode=layout_style
+                os.makedirs(
+                    image_dir,
+                    exist_ok=True
+                )
+
+                os.makedirs(
+                    annotation_dir,
+                    exist_ok=True
+                )
+
+                for index in range(count):
+
+                    input_text = self._prepare_text(
+                        source_text,
+                        script_name
                     )
 
-                    file_id = f"image_{img_idx:04d}"
-                    img.save(os.path.join(img_dir, f"{file_id}.png"))
-                    with open(os.path.join(ann_dir, f"{file_id}.md"), "w", encoding="utf-8") as f:
-                        f.write(gt_text)
+                    if not input_text:
+                        raise ValueError(
+                            f"No valid text found for {script_name}"
+                        )
 
-                    img_idx += 1
+                    background = random.choice(
+                        background_types
+                    )
 
-                script_summary[split_name] = count
-            summary[script_name] = script_summary
+                    layout = random.choice(
+                        layout_modes
+                    )
+
+                    image, ground_truth = generator.generate_sample(
+                        text_input=input_text,
+                        bg_type=background,
+                        layout_mode=layout,
+                        font_size=self.cfg["defaults"].get(
+                            "font_size",
+                            58
+                        ),
+                        handwriting_variation=self.cfg["defaults"].get(
+                            "handwriting_var",
+                            40
+                        ),
+                        aging_val=self.cfg["defaults"].get(
+                            "paper_aging",
+                            75
+                        ) / 100.0,
+                        artifact_value=self.cfg["defaults"].get(
+                            "artifacts",
+                            25
+                        ) / 100.0,
+                        page_warping=self.cfg["defaults"].get(
+                            "page_warping",
+                            15
+                        ) / 100.0,
+                        use_procedural=False,
+                        seed=123 + image_number
+                    )
+
+                    file_id = (
+                        f"image_{image_number:04d}"
+                    )
+
+                    image_path = os.path.join(
+                        image_dir,
+                        f"{file_id}.png"
+                    )
+
+                    annotation_path = os.path.join(
+                        annotation_dir,
+                        f"{file_id}.md"
+                    )
+
+                    image.save(
+                        image_path
+                    )
+
+                    with open(
+                        annotation_path,
+                        "w",
+                        encoding="utf-8"
+                    ) as file:
+                        file.write(
+                            ground_truth
+                        )
+
+                    image_number += 1
+
+                    print(
+                        f"{script_name} - "
+                        f"{split_name}: "
+                        f"{index + 1}/{count}"
+                    )
+
+                script_summary[
+                    split_name
+                ] = count
+
+            summary[
+                script_name
+            ] = script_summary
 
         return summary
