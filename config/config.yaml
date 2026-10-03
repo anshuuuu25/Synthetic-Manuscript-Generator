@@ -1,0 +1,30 @@
+canvas:
+  width: 2048
+  height: 1024
+
+scripts:
+  devanagari:
+    display_name: "Devanagari"
+    font_path: "assets/fonts/devanagari.ttf"
+    fallback_font: "assets/fonts/devanagari.ttf"
+    sample_text: "लक्षणा। अपूर्व असे परियेसा ।८। ऋषि म्हणे रायासी। पुत्रभविष्य\nपुससी। ऐकोनि दुख पावसी। कवणेपरी सांगावे ।९। राव विनवी तये\nवेळी। निरोपावे सकळी। उपाय करिसी तात्काळी। दुखावेगळा तूचि\nकरिसी ।१०। ऐकोनिया ऋषीश्वरा सांगता झाला विस्तारा ऐक राजा\nतुझा कुमारा बारा वर्षे आयुष्य असे ।११। तया बारा वर्षांतात राहिला\nअसती दिवस साता आठवे दिवशी येईल मृत्यु। तुझ्या पुत्रासी परियेसा\n।१२। ऐकोनि ऋषीचे वचना राजा मूर्च्छित जाहला तत्क्षणा करिवा"
+  modi:
+    display_name: "Modi"
+    font_path: "assets/fonts/modi.ttf"
+    fallback_font: "assets/fonts/devanagari.ttf"
+    sample_text: "𑘭𑘨𑘿𑘪 𑘦𑘰𑘡𑘪𑘰𑘽𑘓𑘰 𑘕𑘡𑘿𑘦 𑘭𑘿𑘪𑘝𑘽𑘝𑘿𑘨𑘓 𑘖𑘰𑘩𑘹𑘩𑘰 𑘁𑘮𑘹\n𑘪 𑘭𑘨𑘿𑘪𑘰𑘡𑘰 𑘭𑘦𑘰𑘡 𑘢𑘿𑘨𑘝𑘰 𑘪 𑘁𑘟𑘨 𑘮𑘎𑘿𑘎 𑘁𑘮𑘹𑘝\n𑘝𑘿𑘧𑘰𑘽𑘡𑘰 𑘪𑘱𑘓𑘰𑘨𑘱 𑘪 𑘪𑘱𑘪𑘹𑘎 𑘩𑘰𑘤𑘩𑘹𑘩𑘰 𑘁𑘮𑘹"
+  sharada:
+    display_name: "Sharada"
+    font_path: "assets/fonts/sharada.ttf"
+    fallback_font: "assets/fonts/devanagari.ttf"
+    sample_text: "𑆏𑆩𑆑𑆳𑆫𑆧𑆴𑆤𑆢𑆶𑆱𑆁𑆪𑆶𑆑𑇀𑆠𑆁 𑆤𑆴𑆠𑇀𑆪𑆁 𑆣𑇀𑆪𑆳𑆪𑆤𑇀𑆠𑆴 𑆪𑆾𑆓𑆴𑆤𑆂\n𑆑𑆳𑆩𑆢𑆁 𑆩𑆾𑆑𑇀2026𑆢𑆁 𑆖𑆽𑆮 𑆏𑆩𑆑𑆳𑆫𑆳𑆪 𑆤𑆩𑆾 𑆤𑆩𑆂"
+
+defaults:
+  quality_preset: "HISTORICAL"
+  paper_aging: 75
+  handwriting_var: 40
+  artifacts: 25
+  page_warping: 15
+  edge_damage: 25
+  scan_effect: 15
+  font_size: 58
